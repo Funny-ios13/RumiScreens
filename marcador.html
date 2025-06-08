@@ -4,55 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ruminahui Arena | Marcador Interactivo</title>
-    <!-- Incluyendo Tailwind CSS para un diseño moderno y responsivo. -->
+    <!-- Incluyendo Tailwind CSS para un diseño moderno y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
         /* Estilos personalizados adicionales */
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        body { font-family: 'Inter', sans-serif; }
+        .clickable { cursor: pointer; user-select: none; }
+        .timer-font { font-family: 'Roboto Mono', monospace; }
+        .score-number { font-size: 8rem; line-height: 1; }
+        @media (min-width: 768px) { .score-number { font-size: 15rem; } }
+        /* Animación para el anuncio */
+        @keyframes slide-in-out {
+            0% { transform: translateY(100%); opacity: 0; }
+            15% { transform: translateY(0); opacity: 1; }
+            85% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100%); opacity: 0; }
         }
-        .clickable {
-            cursor: pointer; /* Cambia el cursor para indicar que es clickeable */
-            user-select: none; /* Evita que el texto del marcador sea seleccionable */
-        }
-        /* Clase para controlar el tamaño de los números */
-        .score-number {
-            font-size: 8rem; /* Tamaño para pantallas pequeñas (128px) */
-            line-height: 1;
-        }
-
-        @media (min-width: 768px) { /* md: breakpoint de Tailwind */
-            .score-number {
-                font-size: 15rem; /* Tamaño para pantallas medianas y grandes (240px) */
-            }
+        .announcement-banner {
+            /* La animación se aplica ahora con JavaScript */
         }
     </style>
 </head>
-<body class="bg-black text-white flex flex-col h-screen p-4 md:p-8">
+<body class="bg-black text-white flex flex-col h-screen p-4 md:p-8 overflow-hidden">
 
-    <!-- Contenedor del Logo de la Competición -->
     <header class="w-full flex justify-center py-4 flex-shrink-0 clickable" id="header-link">
-        <!-- Cambia el src a la URL de tu logo de la competición -->
-        <img class="h-10 md:h-12" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/2025_FIFA_Club_World_Cup.svg/2048px-2025_FIFA_Club_World_Cup.svg.png" alt="FIFA Club World Cup">
+        <img class="h-20 md:h-22" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/2025_FIFA_Club_World_Cup.svg/2048px-2025_FIFA_Club_World_Cup.svg.png" alt="FIFA Club World Cup">
     </header>
 
-    <!-- Contenedor Principal del Marcador -->
-    <main class="w-full flex-grow flex items-center justify-around">
-
+    <main class="w-full flex-grow flex items-center justify-around z-10">
         <!-- Equipo Local -->
         <div class="flex flex-col items-center justify-center text-center w-1/3">
             <h1 id="score-local" class="clickable score-number font-black" onclick="changeScore('local', 1)">0</h1>
             <h2 class="clickable mt-4 md:mt-8 text-xl md:text-4xl font-bold tracking-wide" onclick="changeScore('local', -1)">Real Madrid CF</h2>
         </div>
 
-        <!-- VS Separador -->
-        <div class="flex items-center justify-center w-1/3">
-            <span class="text-5xl md:text-8xl font-black">___</span>
+        <!-- Separador y Temporizador -->
+        <div class="flex flex-col items-center justify-center text-center w-1/3 space-y-6">
+            <div id="event-trigger" class="w-1/2 h-1 md:h-2 bg-gray-700 rounded-full clickable hover:bg-gray-500 transition-colors"></div>
+            <div id="timer" class="clickable text-6xl md:text-7xl timer-font font-bold">00:00</div>
+            <div id="match-status" class="clickable text-xl md:text-2xl font-bold tracking-wider uppercase text-gray-300">INICIO DEL PARTIDO</div>
+            <div class="w-1/2 h-1 md:h-2 bg-gray-700 rounded-full"></div>
         </div>
 
         <!-- Equipo Visitante -->
@@ -60,47 +55,338 @@
             <h1 id="score-visitor" class="clickable score-number font-black" onclick="changeScore('visitor', 1)">0</h1>
             <h2 class="clickable mt-4 md:mt-8 text-xl md:text-4xl font-bold tracking-wide" onclick="changeScore('visitor', -1)">Al Hilal</h2>
         </div>
-
     </main>
+
+    <!-- Contenedor de Anuncios -->
+    <div id="announcement-container" class="absolute bottom-0 left-0 w-full p-4 md:p-8 z-50 pointer-events-none"></div>
+
+    <!-- Modals (Paneles) -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 z-40 hidden"></div>
+
+    <!-- Panel de Eventos Principal -->
+    <div id="events-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content !max-w-3xl">
+            <h3 class="modal-title">Eventos del Partido</h3>
+            <div id="event-options-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button data-modal="added-time-modal" class="event-btn">Tiempo Añadido</button>
+                <button data-modal="card-modal" data-card-color="yellow" class="event-btn">Tarjeta Amarilla</button>
+                <button data-modal="card-modal" data-card-color="double-yellow" class="event-btn">Doble Amarilla</button>
+                <button data-modal="card-modal" data-card-color="red" class="event-btn">Tarjeta Roja</button>
+                <button data-modal="substitution-modal" class="event-btn">Sustitución</button>
+                <button data-modal="announcement-modal" class="event-btn">Anuncio</button>
+            </div>
+            <div class="modal-actions"><button class="modal-cancel-btn">Cancelar</button></div>
+        </div>
+    </div>
     
+    <!-- Panel para Tiempo Añadido -->
+    <div id="added-time-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">Tiempo Añadido</h3>
+            <div>
+                <label for="added-time-input">Tiempo (MM:SS)</label>
+                <input type="text" id="added-time-input" class="modal-input" value="+05:00">
+            </div>
+            <div class="mt-4">
+                <label for="added-time-duration">Duración del anuncio (s)</label>
+                <input type="number" id="added-time-duration" class="modal-input" value="8">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel-btn">Cancelar</button>
+                <button id="show-added-time-btn" class="modal-confirm-btn">Mostrar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel para Tarjetas -->
+    <div id="card-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content">
+            <h3 id="card-modal-title" class="modal-title">Tarjeta</h3>
+            <label for="card-player-name">Nombre del Jugador</label>
+            <input type="text" id="card-player-name" class="modal-input" placeholder="Nombre Apellido">
+            <label for="card-player-number" class="mt-4">Dorsal</label>
+            <input type="text" id="card-player-number" class="modal-input" placeholder="00">
+            <div class="mt-4">
+                <label for="card-duration">Duración del anuncio (s)</label>
+                <input type="number" id="card-duration" class="modal-input" value="8">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel-btn">Cancelar</button>
+                <button id="show-card-btn" class="modal-confirm-btn">Mostrar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel para Sustitución -->
+    <div id="substitution-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">Sustitución</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-green-400 font-bold mb-2">Entra</h4>
+                    <label>Nombre</label><input type="text" id="sub-in-name" class="modal-input">
+                    <label class="mt-2">Dorsal</label><input type="text" id="sub-in-number" class="modal-input">
+                </div>
+                 <div>
+                    <h4 class="text-red-400 font-bold mb-2">Sale</h4>
+                    <label>Nombre</label><input type="text" id="sub-out-name" class="modal-input">
+                    <label class="mt-2">Dorsal</label><input type="text" id="sub-out-number" class="modal-input">
+                </div>
+            </div>
+             <div class="mt-4">
+                <label for="substitution-duration">Duración del anuncio (s)</label>
+                <input type="number" id="substitution-duration" class="modal-input" value="8">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel-btn">Cancelar</button>
+                <button id="show-substitution-btn" class="modal-confirm-btn">Mostrar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel para Anuncio Personalizado -->
+    <div id="announcement-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">Anuncio Personalizado</h3>
+            <label for="announcement-title">Título</label>
+            <input type="text" id="announcement-title" class="modal-input" placeholder="Título del Anuncio">
+            <label for="announcement-message" class="mt-4">Mensaje</label>
+            <textarea id="announcement-message" class="modal-input" rows="3" placeholder="Mensaje a mostrar..."></textarea>
+            <div class="mt-4">
+                <label for="announcement-duration">Duración del anuncio (s)</label>
+                <input type="number" id="announcement-duration" class="modal-input" value="8">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel-btn">Cancelar</button>
+                <button id="show-announcement-btn" class="modal-confirm-btn">Mostrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para seleccionar el estado del partido -->
+    <div id="status-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-2xl border border-gray-700">
+            <h3 class="text-2xl font-bold mb-6 text-center">Estado del Partido</h3>
+            <div id="status-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+            <div class="mt-6 flex justify-end"><button id="cancel-status-btn" class="modal-cancel-btn">Cancelar</button></div>
+        </div>
+    </div>
+    
+    <!-- Panel para configurar el temporizador -->
+    <div id="timer-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">Configurar Temporizador</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="start-time">Empezar en (MM:SS)</label>
+                    <input type="text" id="start-time" class="modal-input timer-font" value="00:00">
+                </div>
+                <div>
+                    <label for="duration-time">Tiempo de partido (MM:SS)</label>
+                    <input type="text" id="duration-time" class="modal-input timer-font" value="90:00">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel-btn">Cancelar</button>
+                <button id="start-timer-btn" class="modal-confirm-btn">Empezar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <style> /* Estilos CSS para los componentes de los Modals */
+        .modal-content { @apply bg-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-2xl border border-gray-700 text-white; }
+        .modal-title { @apply text-2xl font-bold mb-6 text-center; }
+        .modal-input { @apply block w-full bg-gray-200 border border-gray-400 text-black placeholder-gray-600 rounded-lg p-2.5 mt-1 focus:ring-blue-500 focus:border-blue-500; }
+        label { @apply block text-sm font-medium text-gray-300; }
+        .modal-actions { @apply mt-6 flex justify-end space-x-4; }
+        .modal-cancel-btn { @apply py-2 px-5 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors; }
+        .modal-confirm-btn { @apply py-2 px-5 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold transition-colors; }
+        .event-btn { @apply w-full text-center p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-lg; }
+    </style>
+
     <script>
-        /**
-         * Cambia el marcador de un equipo por una cantidad específica.
-         * @param {string} team - 'local' o 'visitor' para identificar el equipo.
-         * @param {number} amount - El número a sumar al marcador (puede ser positivo o negativo).
-         */
-        function changeScore(team, amount) {
-            let scoreElement;
-            if (team === 'local') {
-                scoreElement = document.getElementById('score-local');
+        // === ELEMENTOS GLOBALES Y LÓGICA DE MODALS ===
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const allModals = document.querySelectorAll('.fixed.inset-0.z-50');
+        const eventTrigger = document.getElementById('event-trigger');
+        let currentCardColor = 'yellow';
+
+        function showModal(modalId) {
+            hideAllModals();
+            modalBackdrop.classList.remove('hidden');
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function hideAllModals() {
+            modalBackdrop.classList.add('hidden');
+            allModals.forEach(modal => {
+                if (!modal.id.includes('modal-backdrop')) {
+                    modal.classList.add('hidden');
+                }
+            });
+        }
+        
+        eventTrigger.addEventListener('click', () => showModal('events-modal'));
+        document.querySelectorAll('.modal-cancel-btn').forEach(btn => btn.addEventListener('click', hideAllModals));
+        document.querySelectorAll('.event-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modalId = btn.dataset.modal;
+                if (btn.dataset.cardColor) {
+                    currentCardColor = btn.dataset.cardColor;
+                    const cardModalTitle = document.getElementById('card-modal-title');
+                    const cardBtn = document.getElementById('show-card-btn');
+                    if (currentCardColor === 'yellow') {
+                        cardModalTitle.textContent = "Tarjeta Amarilla";
+                        cardBtn.className = 'modal-confirm-btn bg-yellow-500 hover:bg-yellow-400 text-black';
+                    } else if (currentCardColor === 'red') {
+                        cardModalTitle.textContent = "Tarjeta Roja";
+                        cardBtn.className = 'modal-confirm-btn bg-red-600 hover:bg-red-500';
+                    } else { // Double yellow
+                        cardModalTitle.textContent = "Doble Amarilla y Roja";
+                        cardBtn.className = 'modal-confirm-btn bg-orange-500 hover:bg-orange-400';
+                    }
+                }
+                showModal(modalId);
+            });
+        });
+        
+        // --- LÓGICA PARA MOSTRAR ANUNCIOS ---
+        const announcementContainer = document.getElementById('announcement-container');
+        function showAnnouncement(htmlContent, duration) {
+            const durationSec = parseInt(duration, 10) || 8;
+            const banner = document.createElement('div');
+            banner.className = 'announcement-banner bg-gray-900 bg-opacity-90 p-4 rounded-t-2xl border-t-2 border-gray-700 shadow-lg';
+            banner.style.animation = `slide-in-out ${durationSec}s forwards ease-in-out`;
+            banner.innerHTML = htmlContent;
+            announcementContainer.innerHTML = ''; 
+            announcementContainer.appendChild(banner);
+        }
+
+        // --- Lógica de Eventos Específicos ---
+        document.getElementById('show-added-time-btn').addEventListener('click', () => {
+            const time = document.getElementById('added-time-input').value;
+            const duration = document.getElementById('added-time-duration').value;
+            const content = `<div class="text-center"><div class="text-2xl font-bold uppercase text-gray-400">Tiempo Añadido</div><div class="text-6xl font-bold timer-font text-white">${time}</div></div>`;
+            showAnnouncement(content, duration);
+            hideAllModals();
+        });
+
+        document.getElementById('show-card-btn').addEventListener('click', () => {
+            const name = document.getElementById('card-player-name').value;
+            const number = document.getElementById('card-player-number').value;
+            const duration = document.getElementById('card-duration').value;
+            let cardContent = '';
+
+            if (currentCardColor === 'double-yellow') {
+                cardContent = `
+                <div class="flex items-center justify-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="flex-shrink-0 w-20 h-28 bg-yellow-400 rounded-lg border-2 border-black/20 shadow-lg rotate-12"></div>
+                        <div class="flex-shrink-0 w-20 h-28 bg-yellow-400 rounded-lg border-2 border-black/20 shadow-lg -rotate-12"></div>
+                        <div class="text-6xl mx-4 font-black text-gray-500">=</div>
+                        <div class="flex-shrink-0 w-20 h-28 bg-red-600 rounded-lg border-2 border-black/20 shadow-lg"></div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold">${name}</div>
+                        <div class="text-6xl font-black text-gray-400">${number}</div>
+                    </div>
+                </div>`;
             } else {
-                scoreElement = document.getElementById('score-visitor');
+                const cardColorClass = currentCardColor === 'yellow' ? 'bg-yellow-400' : 'bg-red-600';
+                cardContent = `
+                <div class="flex items-center justify-center space-x-6">
+                    <div class="flex-shrink-0 w-20 h-28 ${cardColorClass} rounded-lg border-2 border-black/20 shadow-lg -rotate-12"></div>
+                    <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                    <div>
+                        <div class="text-4xl font-bold">${name}</div>
+                        <div class="text-6xl font-black text-gray-400">${number}</div>
+                    </div>
+                </div>`;
             }
-            
-            // Obtenemos el valor actual, lo convertimos a número
-            let currentScore = parseInt(scoreElement.innerText, 10);
-            
-            // Calculamos el nuevo marcador
-            let newScore = currentScore + amount;
+            showAnnouncement(cardContent, duration);
+            hideAllModals();
+        });
 
-            // Nos aseguramos de que el marcador no sea menor que 0
-            if (newScore < 0) {
-                newScore = 0;
-            }
-            
-            scoreElement.innerText = newScore;
-        }
+        document.getElementById('show-substitution-btn').addEventListener('click', () => {
+            const inName = document.getElementById('sub-in-name').value;
+            const inNum = document.getElementById('sub-in-number').value;
+            const outName = document.getElementById('sub-out-name').value;
+            const outNum = document.getElementById('sub-out-number').value;
+            const duration = document.getElementById('substitution-duration').value;
+            const content = `
+                <div class="text-center"><div class="text-2xl font-bold uppercase text-gray-400 mb-4">Sustitución</div>
+                <div class="flex items-center justify-around">
+                    <div class="text-left">
+                        <div class="flex items-center"><svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg><span class="text-2xl font-bold ml-2">${inName} (${inNum})</span></div>
+                    </div>
+                    <div class="text-left">
+                         <div class="flex items-center"><svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v11"></path></svg><span class="text-2xl font-bold ml-2">${outName} (${outNum})</span></div>
+                    </div>
+                </div></div>`;
+            showAnnouncement(content, duration);
+            hideAllModals();
+        });
 
-        // Agrega el evento de clic al header para redirigir
+        document.getElementById('show-announcement-btn').addEventListener('click', () => {
+            const title = document.getElementById('announcement-title').value;
+            const message = document.getElementById('announcement-message').value;
+            const duration = document.getElementById('announcement-duration').value;
+            const content = `<div class="text-center"><div class="text-2xl font-bold uppercase text-gray-400">${title}</div><div class="text-3xl font-medium text-white mt-2">${message}</div></div>`;
+            showAnnouncement(content, duration);
+            hideAllModals();
+        });
+        
+        // --- CÓDIGO EXISTENTE (MARCADOR, ESTADO, TEMPORIZADOR) ---
         const headerLink = document.getElementById('header-link');
-        if (headerLink) {
-            headerLink.onclick = function() {
-                // Cambia esta URL a la página que desees
-                console.log("Header clicked, redirecting...");
-                 window.location.href = "./index.html"; 
-            };
-        }
-    </script>
+        const scoreLocalElement = document.getElementById('score-local');
+        const scoreVisitorElement = document.getElementById('score-visitor');
+        const timerElement = document.getElementById('timer');
+        const statusElement = document.getElementById('match-status');
+        function changeScore(team, amount) { const scoreElement = (team === 'local') ? scoreLocalElement : scoreVisitorElement; let currentScore = parseInt(scoreElement.innerText, 10); let newScore = Math.max(0, currentScore + amount); scoreElement.innerText = newScore; }
+        headerLink.onclick = () => window.location.href = "./index.html";
+        const statusModal = document.getElementById('status-modal'); const statusOptionsContainer = document.getElementById('status-options-container'); const cancelStatusBtn = document.getElementById('cancel-status-btn');
+        const matchStatuses = ["INICIO DEL PARTIDO", "1ER TIEMPO", "MEDIO TIEMPO", "2DO TIEMPO", "FIN DEL PARTIDO", "1ER TIEMPO DE ALARGO", "2DO TIEMPO DE ALARGO", "PENALES", "EVENTO PAUSADO", "EVENTO CANCELADO"];
+        function populateStatusModal() { statusOptionsContainer.innerHTML = ''; matchStatuses.forEach(status => { const button = document.createElement('button'); button.textContent = status; button.className = 'w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors'; button.onclick = () => { statusElement.innerText = status; hideAllModals(); }; statusOptionsContainer.appendChild(button); }); }
+        statusElement.addEventListener('click', () => showModal('status-modal')); cancelStatusBtn.addEventListener('click', hideAllModals); populateStatusModal();
+        
+        // --- Lógica del Temporizador Corregida ---
+        const timerModal = document.getElementById('timer-modal'); 
+        const startTimeInput = document.getElementById('start-time'); 
+        const durationTimeInput = document.getElementById('duration-time'); 
+        const startTimerBtn = document.getElementById('start-timer-btn');
+        let timerInterval = null; 
+        let currentTimeInSeconds = 0; 
+        let stopTimeInSeconds = 0;
 
+        function parseTimeToSeconds(timeStr) { if (!timeStr || !/^\d{1,3}:\d{2}$/.test(timeStr)) return null; const parts = timeStr.split(':'); const minutes = parseInt(parts[0], 10); const seconds = parseInt(parts[1], 10); if (isNaN(minutes) || isNaN(seconds) || seconds > 59) return null; return (minutes * 60) + seconds; }
+        function formatTime(totalSeconds) { const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0'); const seconds = (totalSeconds % 60).toString().padStart(2, '0'); return `${minutes}:${seconds}`; }
+        function tick() { if (currentTimeInSeconds >= stopTimeInSeconds) { clearInterval(timerInterval); timerInterval = null; return; } currentTimeInSeconds++; timerElement.innerText = formatTime(currentTimeInSeconds); }
+        
+        timerElement.addEventListener('click', () => { 
+            if (timerInterval) { 
+                clearInterval(timerInterval); 
+                timerInterval = null; 
+            } else { 
+                showModal('timer-modal');
+            } 
+        });
+        
+        startTimerBtn.addEventListener('click', () => { 
+            const startSeconds = parseTimeToSeconds(startTimeInput.value); 
+            const stopSeconds = parseTimeToSeconds(durationTimeInput.value); 
+            if (startSeconds !== null && stopSeconds !== null && stopSeconds >= startSeconds) { 
+                currentTimeInSeconds = startSeconds; 
+                stopTimeInSeconds = stopSeconds; 
+                timerElement.innerText = formatTime(currentTimeInSeconds); 
+                clearInterval(timerInterval); 
+                timerInterval = setInterval(tick, 1000); 
+                hideAllModals(); 
+            } 
+        });
+    </script>
 </body>
 </html>
