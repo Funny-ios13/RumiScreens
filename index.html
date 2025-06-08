@@ -22,8 +22,8 @@
 
     <!-- Contenedor del Logo de la Competición -->
     <header class="w-full flex justify-center py-4 flex-shrink-0">
-        <!-- Cambia el src a la URL de tu logo de la competición -->
-        <img class="h-10 md:h-12" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/2025_FIFA_Club_World_Cup.svg/2048px-2025_FIFA_Club_World_Cup.svg.png" alt="FIFA Club World Cup">
+        <!-- Cambia el src a la URL de tu logo de la competición 10 y 12 es el default -->
+        <img class="h-30 md:h-32" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/2025_FIFA_Club_World_Cup.svg/2048px-2025_FIFA_Club_World_Cup.svg.png" alt="FIFA Club World Cup">
     </header>
 
     <!-- Contenedor Principal del Marcador -->
@@ -57,6 +57,17 @@
         </div>
 
     </main>
+
+    <script>
+           const elements = document.getElementsByClassName('h-32 w-32 md:h-60 md:w-60 object-contain');
+
+   for (let i = 0; i < elements.length; i++) {
+     elements[i].onclick = function() {
+       // Your code here when the element is clicked
+        window.location.href = "./marcador.html"
+     };
+   }
+    </script>
 
 </body>
 </html>
