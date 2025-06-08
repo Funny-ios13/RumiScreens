@@ -4,92 +4,307 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ruminahui Arena | Marcador Interactivo</title>
-    <!-- Incluyendo Tailwind CSS para un diseño moderno y responsivo -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos personalizados adicionales */
-        body { font-family: 'Inter', sans-serif; }
+        /* --- ESTILOS GENERALES --- */
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        @media (min-width: 768px) {
+            body { padding: 2rem; }
+        }
+
         .clickable { cursor: pointer; user-select: none; }
         .timer-font { font-family: 'Roboto Mono', monospace; }
-        .score-number { font-size: 8rem; line-height: 1; }
-        @media (min-width: 768px) { .score-number { font-size: 15rem; } }
-        /* Animación para el anuncio */
-        @keyframes slide-in-out {
-            0% { transform: translateY(100%); opacity: 0; }
-            15% { transform: translateY(0); opacity: 1; }
-            85% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(100%); opacity: 0; }
+
+        /* --- LAYOUT PRINCIPAL (CORREGIDO CON GRID) --- */
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 1rem 0;
+            flex-shrink: 0;
+        }
+        header img {
+            height: 5rem;
+        }
+        @media (min-width: 768px) {
+            header img { height: 5.5rem; }
+        }
+        
+        main {
+            width: 100%;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .team-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .score-number {
+            font-size: 8rem;
+            line-height: 1;
+            font-weight: 900;
+        }
+        .team-name {
+            margin-top: 1rem; /* Ajustado para subir el nombre */
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        @media (min-width: 768px) {
+            .score-number { font-size: 15rem; }
+            .team-name { margin-top: 1.5rem; font-size: 2.25rem; }
+        }
+
+        .separator-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 1.5rem;
+        }
+        .divider-line {
+            width: 50%;
+            height: 0.25rem;
+            background-color: #4a5568;
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+        }
+        #event-trigger:hover {
+            background-color: #718096;
+        }
+
+        #timer {
+            font-size: 3.75rem;
+            font-weight: 700;
+        }
+        #match-status {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #a0aec0;
+        }
+        @media (min-width: 768px) {
+            #timer { font-size: 4.5rem; }
+            #match-status { font-size: 1.5rem; }
+        }
+
+        /* --- PANELES (MODALS) --- */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 40;
+        }
+        .modal-container {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: #2d3748;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 48rem; /* Equivalent to max-w-3xl */
+            border: 1px solid #4a5568;
+            color: white;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .modal-input {
+            display: block;
+            width: 100%;
+            background-color: #f7fafc; /* Fondo claro */
+            border: 1px solid #cbd5e0;
+            color: #1a202c; /* Texto oscuro */
+            placeholder-color: #a0aec0;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-top: 0.25rem;
+            box-sizing: border-box;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        textarea.modal-input {
+            resize: vertical;
+        }
+        .modal-content label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+        .modal-actions {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        .modal-cancel-btn, .modal-confirm-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+            border: none;
+        }
+        .modal-cancel-btn {
+            background-color: #4a5568;
+        }
+        .modal-cancel-btn:hover {
+            background-color: #718096;
+        }
+        .modal-confirm-btn {
+            background-color: #3182ce;
+            font-weight: 700;
+        }
+        .modal-confirm-btn:hover {
+            background-color: #4299e1;
+        }
+        .grid-container {
+            display: grid;
+            gap: 1rem;
+        }
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            background-color: #4a5568;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+            color: white;
+            border: none;
+        }
+        .grid-btn:hover {
+            background-color: #718096;
+        }
+
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .hidden { display: none; }
+
+        /* --- ANUNCIOS --- */
+        #announcement-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            box-sizing: border-box;
+            z-index: 50;
+            pointer-events: none;
+        }
+        @media (min-width: 768px) {
+            #announcement-container { padding: 2rem; }
         }
         .announcement-banner {
-            /* La animación se aplica ahora con JavaScript */
+            background-color: rgba(17, 24, 39, 0.95); /* bg-gray-900 bg-opacity-95 */
+            padding: 1rem;
+            border-top: 2px solid #4a5568;
+            border-radius: 1rem 1rem 0 0;
+            box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.1), 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
-<body class="bg-black text-white flex flex-col h-screen p-4 md:p-8 overflow-hidden">
+<body>
 
-    <header class="w-full flex justify-center py-4 flex-shrink-0 clickable" id="header-link">
-        <img class="h-20 md:h-22" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/2025_FIFA_Club_World_Cup.svg/2048px-2025_FIFA_Club_World_Cup.svg.png" alt="FIFA Club World Cup">
+    <header>
+        <img id="header-link" class="clickable" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/2025_FIFA_Club_World_Cup.svg/2048px-2025_FIFA_Club_World_Cup.svg.png" alt="FIFA Club World Cup">
     </header>
 
-    <main class="w-full flex-grow flex items-center justify-around z-10">
-        <!-- Equipo Local -->
-        <div class="flex flex-col items-center justify-center text-center w-1/3">
-            <h1 id="score-local" class="clickable score-number font-black" onclick="changeScore('local', 1)">0</h1>
-            <h2 class="clickable mt-4 md:mt-8 text-xl md:text-4xl font-bold tracking-wide" onclick="changeScore('local', -1)">Real Madrid CF</h2>
+    <main>
+        <div class="team-container">
+            <h1 id="score-local" class="clickable score-number">0</h1>
+            <h2 class="clickable team-name" onclick="changeScore('local', -1)">Real Madrid CF</h2>
         </div>
 
-        <!-- Separador y Temporizador -->
-        <div class="flex flex-col items-center justify-center text-center w-1/3 space-y-6">
-            <div id="event-trigger" class="w-1/2 h-1 md:h-2 bg-gray-700 rounded-full clickable hover:bg-gray-500 transition-colors"></div>
-            <div id="timer" class="clickable text-6xl md:text-7xl timer-font font-bold">00:00</div>
-            <div id="match-status" class="clickable text-xl md:text-2xl font-bold tracking-wider uppercase text-gray-300">INICIO DEL PARTIDO</div>
-            <div class="w-1/2 h-1 md:h-2 bg-gray-700 rounded-full"></div>
+        <div class="separator-container">
+            <div id="event-trigger" class="divider-line clickable"></div>
+            <div id="timer" class="clickable timer-font">00:00</div>
+            <div id="match-status" class="clickable">INICIO DEL PARTIDO</div>
+            <div class="divider-line"></div>
         </div>
 
-        <!-- Equipo Visitante -->
-        <div class="flex flex-col items-center justify-center text-center w-1/3">
-            <h1 id="score-visitor" class="clickable score-number font-black" onclick="changeScore('visitor', 1)">0</h1>
-            <h2 class="clickable mt-4 md:mt-8 text-xl md:text-4xl font-bold tracking-wide" onclick="changeScore('visitor', -1)">Al Hilal</h2>
+        <div class="team-container">
+            <h1 id="score-visitor" class="clickable score-number">0</h1>
+            <h2 class="clickable team-name" onclick="changeScore('visitor', -1)">Al Hilal</h2>
         </div>
     </main>
 
     <!-- Contenedor de Anuncios -->
-    <div id="announcement-container" class="absolute bottom-0 left-0 w-full p-4 md:p-8 z-50 pointer-events-none"></div>
+    <div id="announcement-container"></div>
 
     <!-- Modals (Paneles) -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 z-40 hidden"></div>
+    <div id="modal-backdrop" class="modal-backdrop hidden"></div>
 
     <!-- Panel de Eventos Principal -->
-    <div id="events-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
-        <div class="modal-content !max-w-3xl">
+    <div id="events-modal" class="modal-container hidden">
+        <div class="modal-content">
             <h3 class="modal-title">Eventos del Partido</h3>
-            <div id="event-options-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button data-modal="added-time-modal" class="event-btn">Tiempo Añadido</button>
-                <button data-modal="card-modal" data-card-color="yellow" class="event-btn">Tarjeta Amarilla</button>
-                <button data-modal="card-modal" data-card-color="double-yellow" class="event-btn">Doble Amarilla</button>
-                <button data-modal="card-modal" data-card-color="red" class="event-btn">Tarjeta Roja</button>
-                <button data-modal="substitution-modal" class="event-btn">Sustitución</button>
-                <button data-modal="announcement-modal" class="event-btn">Anuncio</button>
+            <div class="grid-container grid-cols-2">
+                <button data-modal="added-time-modal" class="grid-btn">Tiempo Añadido</button>
+                <button data-modal="card-modal" data-card-color="yellow" class="grid-btn">Tarjeta Amarilla</button>
+                <button data-modal="card-modal" data-card-color="double-yellow" class="grid-btn">Doble Amarilla</button>
+                <button data-modal="card-modal" data-card-color="red" class="grid-btn">Tarjeta Roja</button>
+                <button data-modal="substitution-modal" class="grid-btn">Sustitución</button>
+                <button data-modal="announcement-modal" class="grid-btn">Anuncio</button>
             </div>
             <div class="modal-actions"><button class="modal-cancel-btn">Cancelar</button></div>
         </div>
     </div>
     
     <!-- Panel para Tiempo Añadido -->
-    <div id="added-time-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+    <div id="added-time-modal" class="modal-container hidden">
         <div class="modal-content">
             <h3 class="modal-title">Tiempo Añadido</h3>
-            <div>
-                <label for="added-time-input">Tiempo (MM:SS)</label>
-                <input type="text" id="added-time-input" class="modal-input" value="+05:00">
-            </div>
-            <div class="mt-4">
-                <label for="added-time-duration">Duración del anuncio (s)</label>
-                <input type="number" id="added-time-duration" class="modal-input" value="8">
+            <div class="space-y-4">
+                <div>
+                    <label for="added-time-input">Tiempo (MM:SS)</label>
+                    <input type="text" id="added-time-input" class="modal-input" value="+05:00">
+                </div>
+                <div>
+                    <label for="added-time-duration">Duración del anuncio (s)</label>
+                    <input type="number" id="added-time-duration" class="modal-input" value="8">
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="modal-cancel-btn">Cancelar</button>
@@ -99,16 +314,22 @@
     </div>
     
     <!-- Panel para Tarjetas -->
-    <div id="card-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+    <div id="card-modal" class="modal-container hidden">
         <div class="modal-content">
             <h3 id="card-modal-title" class="modal-title">Tarjeta</h3>
-            <label for="card-player-name">Nombre del Jugador</label>
-            <input type="text" id="card-player-name" class="modal-input" placeholder="Nombre Apellido">
-            <label for="card-player-number" class="mt-4">Dorsal</label>
-            <input type="text" id="card-player-number" class="modal-input" placeholder="00">
-            <div class="mt-4">
-                <label for="card-duration">Duración del anuncio (s)</label>
-                <input type="number" id="card-duration" class="modal-input" value="8">
+            <div class="space-y-4">
+                <div>
+                    <label for="card-player-name">Nombre del Jugador</label>
+                    <input type="text" id="card-player-name" class="modal-input" placeholder="Nombre Apellido">
+                </div>
+                <div>
+                    <label for="card-player-number">Dorsal</label>
+                    <input type="text" id="card-player-number" class="modal-input" placeholder="00">
+                </div>
+                <div>
+                    <label for="card-duration">Duración del anuncio (s)</label>
+                    <input type="number" id="card-duration" class="modal-input" value="8">
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="modal-cancel-btn">Cancelar</button>
@@ -118,22 +339,30 @@
     </div>
     
     <!-- Panel para Sustitución -->
-    <div id="substitution-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+    <div id="substitution-modal" class="modal-container hidden">
         <div class="modal-content">
             <h3 class="modal-title">Sustitución</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <h4 class="text-green-400 font-bold mb-2">Entra</h4>
-                    <label>Nombre</label><input type="text" id="sub-in-name" class="modal-input">
-                    <label class="mt-2">Dorsal</label><input type="text" id="sub-in-number" class="modal-input">
+            <div class="grid-container grid-cols-2" style="gap: 1.5rem;">
+                <div class="space-y-4">
+                    <h4 style="color: #68d391; font-weight: 700; font-size: 1.125rem;">Entra</h4>
+                    <div>
+                        <label>Nombre</label><input type="text" id="sub-in-name" class="modal-input">
+                    </div>
+                    <div>
+                        <label>Dorsal</label><input type="text" id="sub-in-number" class="modal-input">
+                    </div>
                 </div>
-                 <div>
-                    <h4 class="text-red-400 font-bold mb-2">Sale</h4>
-                    <label>Nombre</label><input type="text" id="sub-out-name" class="modal-input">
-                    <label class="mt-2">Dorsal</label><input type="text" id="sub-out-number" class="modal-input">
+                 <div class="space-y-4">
+                    <h4 style="color: #f56565; font-weight: 700; font-size: 1.125rem;">Sale</h4>
+                    <div>
+                        <label>Nombre</label><input type="text" id="sub-out-name" class="modal-input">
+                    </div>
+                    <div>
+                        <label>Dorsal</label><input type="text" id="sub-out-number" class="modal-input">
+                    </div>
                 </div>
             </div>
-             <div class="mt-4">
+             <div style="margin-top: 1.5rem;">
                 <label for="substitution-duration">Duración del anuncio (s)</label>
                 <input type="number" id="substitution-duration" class="modal-input" value="8">
             </div>
@@ -145,16 +374,22 @@
     </div>
     
     <!-- Panel para Anuncio Personalizado -->
-    <div id="announcement-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+    <div id="announcement-modal" class="modal-container hidden">
         <div class="modal-content">
             <h3 class="modal-title">Anuncio Personalizado</h3>
-            <label for="announcement-title">Título</label>
-            <input type="text" id="announcement-title" class="modal-input" placeholder="Título del Anuncio">
-            <label for="announcement-message" class="mt-4">Mensaje</label>
-            <textarea id="announcement-message" class="modal-input" rows="3" placeholder="Mensaje a mostrar..."></textarea>
-            <div class="mt-4">
-                <label for="announcement-duration">Duración del anuncio (s)</label>
-                <input type="number" id="announcement-duration" class="modal-input" value="8">
+            <div class="space-y-4">
+                <div>
+                    <label for="announcement-title">Título</label>
+                    <input type="text" id="announcement-title" class="modal-input" placeholder="Título del Anuncio">
+                </div>
+                <div>
+                    <label for="announcement-message">Mensaje</label>
+                    <textarea id="announcement-message" class="modal-input" rows="3" placeholder="Mensaje a mostrar..."></textarea>
+                </div>
+                <div>
+                    <label for="announcement-duration">Duración del anuncio (s)</label>
+                    <input type="number" id="announcement-duration" class="modal-input" value="8">
+                </div>
             </div>
             <div class="modal-actions">
                 <button class="modal-cancel-btn">Cancelar</button>
@@ -163,27 +398,27 @@
         </div>
     </div>
 
-    <!-- Modal para seleccionar el estado del partido -->
-    <div id="status-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-2xl border border-gray-700">
-            <h3 class="text-2xl font-bold mb-6 text-center">Estado del Partido</h3>
-            <div id="status-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-            <div class="mt-6 flex justify-end"><button id="cancel-status-btn" class="modal-cancel-btn">Cancelar</button></div>
+    <!-- Panel para seleccionar el estado del partido -->
+    <div id="status-modal" class="modal-container hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">Estado del Partido</h3>
+            <div id="status-options-container" class="grid-container grid-cols-2"></div>
+            <div class="modal-actions"><button id="cancel-status-btn" class="modal-cancel-btn">Cancelar</button></div>
         </div>
     </div>
     
     <!-- Panel para configurar el temporizador -->
-    <div id="timer-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+    <div id="timer-modal" class="modal-container hidden">
         <div class="modal-content">
             <h3 class="modal-title">Configurar Temporizador</h3>
             <div class="space-y-4">
                 <div>
                     <label for="start-time">Empezar en (MM:SS)</label>
-                    <input type="text" id="start-time" class="modal-input timer-font" value="00:00">
+                    <input type="text" id="start-time" class="modal-input timer-font" style="text-align: center; font-size: 1.125rem;" value="00:00">
                 </div>
                 <div>
                     <label for="duration-time">Tiempo de partido (MM:SS)</label>
-                    <input type="text" id="duration-time" class="modal-input timer-font" value="90:00">
+                    <input type="text" id="duration-time" class="modal-input timer-font" style="text-align: center; font-size: 1.125rem;" value="90:00">
                 </div>
             </div>
             <div class="modal-actions">
@@ -193,22 +428,10 @@
         </div>
     </div>
 
-
-    <style> /* Estilos CSS para los componentes de los Modals */
-        .modal-content { @apply bg-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-2xl border border-gray-700 text-white; }
-        .modal-title { @apply text-2xl font-bold mb-6 text-center; }
-        .modal-input { @apply block w-full bg-gray-200 border border-gray-400 text-black placeholder-gray-600 rounded-lg p-2.5 mt-1 focus:ring-blue-500 focus:border-blue-500; }
-        label { @apply block text-sm font-medium text-gray-300; }
-        .modal-actions { @apply mt-6 flex justify-end space-x-4; }
-        .modal-cancel-btn { @apply py-2 px-5 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors; }
-        .modal-confirm-btn { @apply py-2 px-5 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold transition-colors; }
-        .event-btn { @apply w-full text-center p-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-lg; }
-    </style>
-
     <script>
         // === ELEMENTOS GLOBALES Y LÓGICA DE MODALS ===
         const modalBackdrop = document.getElementById('modal-backdrop');
-        const allModals = document.querySelectorAll('.fixed.inset-0.z-50');
+        const allModals = document.querySelectorAll('.modal-container');
         const eventTrigger = document.getElementById('event-trigger');
         let currentCardColor = 'yellow';
 
@@ -224,15 +447,13 @@
         function hideAllModals() {
             modalBackdrop.classList.add('hidden');
             allModals.forEach(modal => {
-                if (!modal.id.includes('modal-backdrop')) {
-                    modal.classList.add('hidden');
-                }
+                modal.classList.add('hidden');
             });
         }
         
         eventTrigger.addEventListener('click', () => showModal('events-modal'));
         document.querySelectorAll('.modal-cancel-btn').forEach(btn => btn.addEventListener('click', hideAllModals));
-        document.querySelectorAll('.event-btn').forEach(btn => {
+        document.querySelectorAll('[data-modal]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const modalId = btn.dataset.modal;
                 if (btn.dataset.cardColor) {
@@ -241,13 +462,16 @@
                     const cardBtn = document.getElementById('show-card-btn');
                     if (currentCardColor === 'yellow') {
                         cardModalTitle.textContent = "Tarjeta Amarilla";
-                        cardBtn.className = 'modal-confirm-btn bg-yellow-500 hover:bg-yellow-400 text-black';
+                        cardBtn.style.backgroundColor = '#f6e05e';
+                        cardBtn.style.color = '#1a202c';
                     } else if (currentCardColor === 'red') {
                         cardModalTitle.textContent = "Tarjeta Roja";
-                        cardBtn.className = 'modal-confirm-btn bg-red-600 hover:bg-red-500';
+                        cardBtn.style.backgroundColor = '#e53e3e';
+                         cardBtn.style.color = 'white';
                     } else { // Double yellow
                         cardModalTitle.textContent = "Doble Amarilla y Roja";
-                        cardBtn.className = 'modal-confirm-btn bg-orange-500 hover:bg-orange-400';
+                        cardBtn.style.backgroundColor = '#ed8936';
+                        cardBtn.style.color = 'white';
                     }
                 }
                 showModal(modalId);
@@ -259,7 +483,7 @@
         function showAnnouncement(htmlContent, duration) {
             const durationSec = parseInt(duration, 10) || 8;
             const banner = document.createElement('div');
-            banner.className = 'announcement-banner bg-gray-900 bg-opacity-90 p-4 rounded-t-2xl border-t-2 border-gray-700 shadow-lg';
+            banner.className = 'announcement-banner';
             banner.style.animation = `slide-in-out ${durationSec}s forwards ease-in-out`;
             banner.innerHTML = htmlContent;
             announcementContainer.innerHTML = ''; 
@@ -270,7 +494,7 @@
         document.getElementById('show-added-time-btn').addEventListener('click', () => {
             const time = document.getElementById('added-time-input').value;
             const duration = document.getElementById('added-time-duration').value;
-            const content = `<div class="text-center"><div class="text-2xl font-bold uppercase text-gray-400">Tiempo Añadido</div><div class="text-6xl font-bold timer-font text-white">${time}</div></div>`;
+            const content = `<div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 700; text-transform: uppercase; color: #a0aec0;">Tiempo Añadido</div><div class="timer-font" style="font-size: 3.75rem; font-weight: 700; color: white;">${time}</div></div>`;
             showAnnouncement(content, duration);
             hideAllModals();
         });
@@ -283,27 +507,27 @@
 
             if (currentCardColor === 'double-yellow') {
                 cardContent = `
-                <div class="flex items-center justify-center space-x-6">
-                    <div class="flex items-center space-x-2">
-                        <div class="flex-shrink-0 w-20 h-28 bg-yellow-400 rounded-lg border-2 border-black/20 shadow-lg rotate-12"></div>
-                        <div class="flex-shrink-0 w-20 h-28 bg-yellow-400 rounded-lg border-2 border-black/20 shadow-lg -rotate-12"></div>
-                        <div class="text-6xl mx-4 font-black text-gray-500">=</div>
-                        <div class="flex-shrink-0 w-20 h-28 bg-red-600 rounded-lg border-2 border-black/20 shadow-lg"></div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 5rem; height: 7rem; background-color: #f6e05e; border-radius: 0.5rem; border: 2px solid rgba(0,0,0,0.2); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transform: rotate(12deg);"></div>
+                        <div style="width: 5rem; height: 7rem; background-color: #f6e05e; border-radius: 0.5rem; border: 2px solid rgba(0,0,0,0.2); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transform: rotate(-12deg);"></div>
+                        <div style="font-size: 3.75rem; margin: 0 1rem; font-weight: 900; color: #718096;">=</div>
+                        <div style="width: 5rem; height: 7rem; background-color: #e53e3e; border-radius: 0.5rem; border: 2px solid rgba(0,0,0,0.2); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
                     </div>
                     <div>
-                        <div class="text-4xl font-bold">${name}</div>
-                        <div class="text-6xl font-black text-gray-400">${number}</div>
+                        <div style="font-size: 2.25rem; font-weight: 700; color: white;">${name}</div>
+                        <div style="font-size: 3.75rem; font-weight: 900; color: #a0aec0;">${number}</div>
                     </div>
                 </div>`;
             } else {
-                const cardColorClass = currentCardColor === 'yellow' ? 'bg-yellow-400' : 'bg-red-600';
+                const cardColor = currentCardColor === 'yellow' ? '#f6e05e' : '#e53e3e';
                 cardContent = `
-                <div class="flex items-center justify-center space-x-6">
-                    <div class="flex-shrink-0 w-20 h-28 ${cardColorClass} rounded-lg border-2 border-black/20 shadow-lg -rotate-12"></div>
-                    <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1.5rem;">
+                    <div style="width: 5rem; height: 7rem; background-color: ${cardColor}; border-radius: 0.5rem; border: 2px solid rgba(0,0,0,0.2); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transform: rotate(-12deg);"></div>
+                    <svg style="width: 6rem; height: 6rem; color: #718096;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
                     <div>
-                        <div class="text-4xl font-bold">${name}</div>
-                        <div class="text-6xl font-black text-gray-400">${number}</div>
+                        <div style="font-size: 2.25rem; font-weight: 700; color: white;">${name}</div>
+                        <div style="font-size: 3.75rem; font-weight: 900; color: #a0aec0;">${number}</div>
                     </div>
                 </div>`;
             }
@@ -318,13 +542,13 @@
             const outNum = document.getElementById('sub-out-number').value;
             const duration = document.getElementById('substitution-duration').value;
             const content = `
-                <div class="text-center"><div class="text-2xl font-bold uppercase text-gray-400 mb-4">Sustitución</div>
-                <div class="flex items-center justify-around">
-                    <div class="text-left">
-                        <div class="flex items-center"><svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg><span class="text-2xl font-bold ml-2">${inName} (${inNum})</span></div>
+                <div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 700; text-transform: uppercase; color: #a0aec0; margin-bottom: 1rem;">Sustitución</div>
+                <div style="display: flex; align-items: center; justify-content: space-around;">
+                    <div style="text-align: left;">
+                        <div style="display: flex; align-items: center;"><svg style="width: 2rem; height: 2rem; color: #68d391;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg><span style="font-size: 1.5rem; font-weight: 700; margin-left: 0.5rem; color: white;">${inName} (${inNum})</span></div>
                     </div>
-                    <div class="text-left">
-                         <div class="flex items-center"><svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v11"></path></svg><span class="text-2xl font-bold ml-2">${outName} (${outNum})</span></div>
+                    <div style="text-align: left;">
+                         <div style="display: flex; align-items: center;"><svg style="width: 2rem; height: 2rem; color: #f56565;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v11"></path></svg><span style="font-size: 1.5rem; font-weight: 700; margin-left: 0.5rem; color: white;">${outName} (${outNum})</span></div>
                     </div>
                 </div></div>`;
             showAnnouncement(content, duration);
@@ -335,7 +559,7 @@
             const title = document.getElementById('announcement-title').value;
             const message = document.getElementById('announcement-message').value;
             const duration = document.getElementById('announcement-duration').value;
-            const content = `<div class="text-center"><div class="text-2xl font-bold uppercase text-gray-400">${title}</div><div class="text-3xl font-medium text-white mt-2">${message}</div></div>`;
+            const content = `<div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: 700; text-transform: uppercase; color: #a0aec0;">${title}</div><div style="font-size: 1.875rem; font-weight: 500; color: white; margin-top: 0.5rem;">${message}</div></div>`;
             showAnnouncement(content, duration);
             hideAllModals();
         });
@@ -346,12 +570,30 @@
         const scoreVisitorElement = document.getElementById('score-visitor');
         const timerElement = document.getElementById('timer');
         const statusElement = document.getElementById('match-status');
-        function changeScore(team, amount) { const scoreElement = (team === 'local') ? scoreLocalElement : scoreVisitorElement; let currentScore = parseInt(scoreElement.innerText, 10); let newScore = Math.max(0, currentScore + amount); scoreElement.innerText = newScore; }
+        function changeScore(team, amount) { 
+            const scoreElement = (team === 'local') ? scoreLocalElement : scoreVisitorElement; 
+            let currentScore = parseInt(scoreElement.innerText, 10); 
+            let newScore = Math.max(0, currentScore + amount); 
+            scoreElement.innerText = newScore; 
+        }
         headerLink.onclick = () => window.location.href = "./index.html";
-        const statusModal = document.getElementById('status-modal'); const statusOptionsContainer = document.getElementById('status-options-container'); const cancelStatusBtn = document.getElementById('cancel-status-btn');
+        const statusModal = document.getElementById('status-modal'); 
+        const statusOptionsContainer = document.getElementById('status-options-container'); 
+        const cancelStatusBtn = document.getElementById('cancel-status-btn');
         const matchStatuses = ["INICIO DEL PARTIDO", "1ER TIEMPO", "MEDIO TIEMPO", "2DO TIEMPO", "FIN DEL PARTIDO", "1ER TIEMPO DE ALARGO", "2DO TIEMPO DE ALARGO", "PENALES", "EVENTO PAUSADO", "EVENTO CANCELADO"];
-        function populateStatusModal() { statusOptionsContainer.innerHTML = ''; matchStatuses.forEach(status => { const button = document.createElement('button'); button.textContent = status; button.className = 'w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors'; button.onclick = () => { statusElement.innerText = status; hideAllModals(); }; statusOptionsContainer.appendChild(button); }); }
-        statusElement.addEventListener('click', () => showModal('status-modal')); cancelStatusBtn.addEventListener('click', hideAllModals); populateStatusModal();
+        function populateStatusModal() { 
+            statusOptionsContainer.innerHTML = ''; 
+            matchStatuses.forEach(status => { 
+                const button = document.createElement('button'); 
+                button.textContent = status; 
+                button.className = 'grid-btn'; 
+                button.onclick = () => { statusElement.innerText = status; hideAllModals(); }; 
+                statusOptionsContainer.appendChild(button); 
+            }); 
+        }
+        statusElement.addEventListener('click', () => showModal('status-modal')); 
+        cancelStatusBtn.addEventListener('click', hideAllModals); 
+        populateStatusModal();
         
         // --- Lógica del Temporizador Corregida ---
         const timerModal = document.getElementById('timer-modal'); 
@@ -367,7 +609,7 @@
         function tick() { if (currentTimeInSeconds >= stopTimeInSeconds) { clearInterval(timerInterval); timerInterval = null; return; } currentTimeInSeconds++; timerElement.innerText = formatTime(currentTimeInSeconds); }
         
         timerElement.addEventListener('click', () => { 
-            if (timerInterval) { 
+            if (timerInterval && !timerInterval._destroyed) { 
                 clearInterval(timerInterval); 
                 timerInterval = null; 
             } else { 
@@ -387,6 +629,11 @@
                 hideAllModals(); 
             } 
         });
+
+        // Add onclick handlers to score numbers
+        scoreLocalElement.onclick = () => changeScore('local', 1);
+        scoreVisitorElement.onclick = () => changeScore('visitor', 1);
+
     </script>
 </body>
 </html>
